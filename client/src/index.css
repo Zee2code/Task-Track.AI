@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-black: #0a0a0a;
+  --color-brand-ink: #1c1c1c;
+  --color-brand-cream: #f8f7f4;
+  --color-brand-gold: #b08d57;
+  --color-brand-gold-light: #d8c39c;
+  --font-display: "Georgia", "Times New Roman", serif;
+}
+
+body {
+  @apply bg-brand-cream text-brand-black antialiased;
+}
+
+.input {
+  @apply w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-gold;
+}

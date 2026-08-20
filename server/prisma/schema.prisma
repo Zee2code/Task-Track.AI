@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TEAM_LEAD
+  EMPLOYEE
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  BLOCKED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+/// Login credentials only. HR/profile data lives on Employee.
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(EMPLOYEE)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  employee Employee?
+}
+
+model Department {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  employees Employee[]
+}
+
+/// HR profile for a person. One-to-one with User (auth identity).
+model Employee {
+  id             String   @id @default(uuid())
+  employeeId     String   @unique // business-facing code, e.g. EMP-0001
+  employeeName   String
+  designation    String
+  email          String   @unique
+  phone          String?
+  role           Role     @default(EMPLOYEE)
+  isActive       Boolean  @default(true)
+  joiningDate    DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  userId String  @unique
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  reportingManagerId String?
+  reportingManager   Employee?  @relation("ReportsTo", fields: [reportingManagerId], references: [id])
+  subordinates       Employee[] @relation("ReportsTo")
+
+  ledTeams       Team[]         @relation("TeamLead")
+  createdTasks   Task[]         @relation("TaskCreator")
+  assignedTasks  Task[]         @relation("TaskAssignee")
+  taskComments   TaskComment[]
+  taskActivities TaskActivity[]
+  notifications  Notification[]
+}
+
+model Team {
+  id     String   @id @default(uuid())
+  name   String
+  leadId String
+  lead   Employee @relation("TeamLead", fields: [leadId], references: [id])
+  tasks  Task[]
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  createdById String
+  createdBy   Employee @relation("TaskCreator", fields: [createdById], references: [id])
+  assignedToId String
+  assignedTo   Employee @relation("TaskAssignee", fields: [assignedToId], references: [id])
+
+  teamId String?
+  team   Team?  @relation(fields: [teamId], references: [id])
+
+  comments      TaskComment[]
+  activity      TaskActivity[]
+  notifications Notification[]
+}
+
+model TaskComment {
+  id         String   @id @default(uuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     Employee @relation(fields: [authorId], references: [id])
+  body       String
+  createdAt  DateTime @default(now())
+}
+
+model TaskActivity {
+  id        String   @id @default(uuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actorId   String
+  actor     Employee @relation(fields: [actorId], references: [id])
+  action    String
+  fromValue String?
+  toValue   String?
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id            String   @id @default(uuid())
+  employeeId    String
+  employee      Employee @relation(fields: [employeeId], references: [id])
+  type          String
+  message       String
+  isRead        Boolean  @default(false)
+  relatedTaskId String?
+  relatedTask   Task?    @relation(fields: [relatedTaskId], references: [id])
+  createdAt     DateTime @default(now())
+}
