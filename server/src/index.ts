@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { authRouter } from "./modules/auth/auth.routes.js";
-import { usersRouter } from "./modules/users/users.routes.js";
+import { employeesRouter, departmentsRouter } from "./modules/users/users.routes.js";
 
 const app = express();
 
@@ -13,7 +13,8 @@ app.use(cookieParser());
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 app.use("/api/auth", authRouter);
-app.use("/api/employees", usersRouter);
+app.use("/api/employees", employeesRouter);
+app.use("/api/departments", departmentsRouter);
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);

@@ -47,7 +47,7 @@ export function AppShell() {
           ))}
         </nav>
         <div className="px-4 py-4 border-t border-white/10 text-xs">
-          <p className="font-medium">{user?.name}</p>
+          <p className="font-medium">{user?.employee?.employeeName ?? user?.email}</p>
           <p className="text-brand-gold-light">{user?.role}</p>
           <button onClick={logout} className="mt-2 text-brand-gold-light hover:text-white">
             Sign out
