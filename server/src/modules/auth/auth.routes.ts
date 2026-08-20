@@ -39,15 +39,18 @@ async function nextEmployeeId() {
   return `EMP-${String(count + 1).padStart(4, "0")}`;
 }
 
+// Bootstrap only: creates the first Admin account when the system has no users yet.
+// Every subsequent employee is created by an Admin via POST /api/employees.
 authRouter.post("/register", async (req, res) => {
+  const userCount = await prisma.user.count();
+  if (userCount > 0) {
+    return res.status(403).json({ error: "Registration is closed. Ask an Admin to create your account." });
+  }
+
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
-  const { employeeName, email, password, designation, role, departmentId, reportingManagerId, phone } =
-    parsed.data;
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) return res.status(409).json({ error: "Email already registered" });
+  const { employeeName, email, password, designation, departmentId, reportingManagerId, phone } = parsed.data;
 
   const passwordHash = await bcrypt.hash(password, 10);
   const employeeId = await nextEmployeeId();
@@ -56,7 +59,7 @@ authRouter.post("/register", async (req, res) => {
     data: {
       email,
       passwordHash,
-      role: role ?? "EMPLOYEE",
+      role: "ADMIN",
       employee: {
         create: {
           employeeId,
@@ -64,7 +67,7 @@ authRouter.post("/register", async (req, res) => {
           designation,
           email,
           phone,
-          role: role ?? "EMPLOYEE",
+          role: "ADMIN",
           departmentId,
           reportingManagerId,
         },
@@ -87,6 +90,8 @@ authRouter.post("/login", async (req, res) => {
 
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) return res.status(401).json({ error: "Invalid credentials" });
+
+  if (!user.isActive) return res.status(403).json({ error: "This account has been deactivated" });
 
   issueToken(res, user);
   res.json({ id: user.id, email: user.email, role: user.role });
@@ -120,5 +125,9 @@ authRouter.get("/me", authenticate, async (req, res) => {
     },
   });
   if (!user) return res.status(404).json({ error: "User not found" });
+  if (!user.isActive) {
+    res.clearCookie("token");
+    return res.status(403).json({ error: "This account has been deactivated" });
+  }
   res.json(user);
 });

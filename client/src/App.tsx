@@ -5,6 +5,8 @@ import { ProtectedRoute } from "./app/ProtectedRoute";
 import { LoginPage } from "./features/auth/LoginPage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { PlaceholderPage } from "./features/dashboard/PlaceholderPage";
+import { EmployeesPage } from "./features/employees/EmployeesPage";
+import { ProfilePage } from "./features/settings/ProfilePage";
 
 export default function App() {
   return (
@@ -20,13 +22,13 @@ export default function App() {
             }
           >
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/employees" element={<PlaceholderPage title="Employees" />} />
+            <Route path="/employees" element={<EmployeesPage />} />
             <Route path="/my-tasks" element={<PlaceholderPage title="My Tasks" />} />
             <Route path="/team-tasks" element={<PlaceholderPage title="Team Tasks" />} />
             <Route path="/operations" element={<PlaceholderPage title="Operations" />} />
             <Route path="/reports" element={<PlaceholderPage title="Reports" />} />
             <Route path="/notifications" element={<PlaceholderPage title="Notifications" />} />
-            <Route path="/settings" element={<PlaceholderPage title="Settings / Profile" />} />
+            <Route path="/settings" element={<ProfilePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
